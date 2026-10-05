@@ -1,0 +1,235 @@
+<!doctype html>
+<!-- مبني بـ reel-editorial-ar — ستايل Editorial Grain. لا تعدّل باليد: عدّل moments.json وارجع شغّل build_reel.py -->
+<html lang="ar" data-resolution="portrait">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1080, height=1920" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="three.min.js"></script>
+<style>
+__FONTFACE__
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:__PAPER__}
+:root{--paper:__PAPER__;--paper2:__PAPER2__;--ink:__INK__;--red:__RED__;--mut:__MUT__;--glow:#f3c46a}
+#root{width:1080px;height:1920px;position:relative;overflow:hidden;background:var(--paper)}
+.L{position:absolute;inset:0}
+.grain{position:absolute;inset:-80px;pointer-events:none;
+ background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+#paper .grain{opacity:.14}
+#grainTop{z-index:50}
+#grainTop .grain{opacity:.055;mix-blend-mode:overlay}
+.ghost{position:absolute;left:0;right:0;top:330px;text-align:center;font-family:"RSerif";font-weight:700;font-size:430px;color:var(--ink);opacity:0;white-space:nowrap}
+.rule{position:absolute;left:108px;right:108px;height:2px;background:var(--ink);opacity:.55}
+/* الاتجاه بينحط على كل عنصر عربي، مش على html/body (بيسوّد الرندر) */
+.ar{direction:rtl;unicode-bidi:isolate}
+
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:540px 1105px;z-index:5}
+#cam{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:0 0;overflow:hidden}
+#rig{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:0 0}
+#rig video{position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover}
+#frame{position:absolute;left:238px;top:746px;width:604px;height:718px;background:#fbf8f2;opacity:0;box-shadow:0 30px 60px rgba(40,30,20,.28),0 4px 10px rgba(40,30,20,.18)}
+.tape{position:absolute;width:150px;height:44px;background:rgba(226,214,190,.82);opacity:0;z-index:6;box-shadow:0 2px 4px rgba(0,0,0,.08)}
+#bandEdge{position:absolute;left:0;right:0;top:548px;height:14px;opacity:0;z-index:6;background:linear-gradient(to bottom,rgba(26,26,26,0),rgba(26,26,26,.25))}
+#gl{position:absolute;left:0;top:0;width:1080px;height:1920px;z-index:8}
+
+.grp{position:absolute;inset:0;opacity:0;z-index:10}
+.at{position:absolute;right:108px;left:108px;text-align:right;white-space:nowrap}
+.serif{font-family:"RSerif";font-weight:700;color:var(--ink);line-height:1.25}
+.serif4{font-family:"RSerif";font-weight:400;color:var(--ink);line-height:1.3}
+.sans{font-family:"RSans";font-weight:700;color:var(--ink)}
+.sans4{font-family:"RSans";font-weight:400;color:var(--mut)}
+.red{color:var(--red)}
+.w{display:inline-block;white-space:nowrap}
+.lab{font-family:"RSans";font-weight:700;font-size:36px;color:var(--red);display:flex;align-items:center;gap:16px}
+.lab i{display:inline-block;width:56px;height:5px;background:var(--red)}
+.cut{position:relative;display:inline-block;padding:0 26px;color:var(--paper);z-index:0;isolation:isolate}
+.cut b{position:absolute;inset:10px 0 2px;background:var(--red);transform:rotate(-2deg);z-index:-1;box-shadow:4px 6px 0 rgba(0,0,0,.10)}
+.tiles{position:absolute;top:352px;right:108px;left:108px;height:160px;display:flex;gap:20px}
+.tile{flex:1;border:3px solid var(--ink);background:var(--paper2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:6px 6px 0 rgba(26,26,26,.12)}
+.tile svg{width:62px;height:62px}
+.tile span{font-family:"RSans";font-weight:700;font-size:46px;color:var(--ink)}
+.stampW{position:absolute;top:366px;left:0;right:0;display:flex;justify-content:center}
+.stamp{transform:rotate(-6deg);border:7px solid var(--red);color:var(--red);font-family:"RSans";font-weight:700;font-size:66px;padding:4px 34px 14px;background:rgba(239,232,220,.9);white-space:nowrap}
+.row{position:absolute;right:108px;left:108px;display:flex;align-items:center;gap:30px}
+.dot{flex:none;width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.dot svg{width:52px;height:52px}
+.dot.ok{background:var(--ink)}
+.dot.no{background:var(--red)}
+.doors{position:absolute;top:226px;left:250px;width:580px;height:300px;perspective:1300px}
+.glow{position:absolute;inset:-60px -120px;background:radial-gradient(ellipse at center,rgba(243,196,106,.95),rgba(243,196,106,.35) 45%,rgba(243,196,106,0) 70%);opacity:0}
+.dtext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"RSerif";font-weight:700;font-size:100px;color:var(--ink);opacity:0;white-space:nowrap}
+.door{position:absolute;top:0;width:290px;height:300px;background:var(--paper2);border:4px solid var(--ink);box-shadow:inset 0 0 0 16px var(--paper2),inset 0 0 0 19px rgba(26,26,26,.55)}
+.door.l{left:0;transform-origin:0 50%}
+.door.r{right:0;transform-origin:100% 50%}
+.door .k{position:absolute;top:140px;width:20px;height:20px;border-radius:50%;background:var(--ink)}
+.door.l .k{right:30px}.door.r .k{left:30px}
+.sw{flex:none;width:190px;height:96px;border-radius:48px;background:var(--red);position:relative;border:4px solid var(--ink)}
+.sw i{position:absolute;top:8px;left:8px;width:72px;height:72px;border-radius:50%;background:#fbf8f2;box-shadow:0 3px 6px rgba(0,0,0,.25)}
+.chips{position:absolute;top:268px;right:108px;left:108px;display:flex;gap:22px}
+.chip{font-family:"RSans";font-weight:700;font-size:58px;color:var(--paper);background:var(--ink);padding:6px 34px 16px;box-shadow:6px 8px 0 rgba(0,0,0,.12)}
+.mapUI .chips{top:212px}
+.mapUI .fade{position:absolute;left:0;right:0;top:0;height:760px;background:linear-gradient(to bottom,rgba(239,232,220,.96) 0,rgba(239,232,220,.85) 45%,rgba(239,232,220,0) 100%)}
+
+#caps{position:absolute;inset:0;z-index:20}
+.cap{position:absolute;top:1290px;left:540px;transform:translateX(-50%);opacity:0;white-space:nowrap;
+ font-family:"RSans";font-weight:700;font-size:62px;line-height:1.25;color:var(--ink);background:var(--paper);
+ padding:8px 30px 16px;box-shadow:0 14px 34px rgba(0,0,0,.32),0 2px 0 rgba(0,0,0,.06)}
+.cap .cw{display:inline-block;opacity:.38;position:relative}
+.cap .st{position:absolute;left:-6px;right:-6px;top:52%;height:7px;background:var(--red)}
+.chap{position:absolute;top:176px;display:flex;align-items:center;gap:18px;background:var(--paper);padding:10px 26px 16px;opacity:0;z-index:21;box-shadow:0 10px 26px rgba(0,0,0,.25)}
+.chap .n{font-family:"RSans";font-weight:700;font-size:30px;color:var(--red)}
+.chap .bar{width:3px;height:40px;background:var(--ink);opacity:.5}
+.chap .t{font-family:"RSerif";font-weight:700;font-size:46px;color:var(--ink)}
+.card{position:absolute;left:540px;transform:translateX(-50%);background:var(--paper);padding:18px 40px 22px;opacity:0;z-index:21;text-align:center;box-shadow:0 14px 34px rgba(0,0,0,.3)}
+.card .a{font-family:"RSerif";font-weight:700;font-size:54px;color:var(--ink);white-space:nowrap}
+.card .b{font-family:"RSans";font-weight:400;font-size:34px;color:var(--red);margin-top:4px}
+
+/* عناصر صغيرة كل ~3 ثواني (accents) */
+.fx{position:absolute;opacity:0;z-index:12;pointer-events:none}
+.ink path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+#sweep{position:absolute;top:-400px;left:0;width:620px;height:2800px;z-index:9;opacity:0;transform:rotate(18deg);
+ background:linear-gradient(90deg,rgba(255,230,180,0),rgba(255,236,200,.42),rgba(255,230,180,0));mix-blend-mode:screen}
+#rays{position:absolute;left:-520px;top:-760px;width:1500px;height:1500px;z-index:7;opacity:0;border-radius:50%;
+ background:repeating-conic-gradient(from 100deg,rgba(255,236,190,.55) 0deg 5deg,rgba(255,236,190,0) 5deg 14deg);
+ -webkit-mask:radial-gradient(circle,#000 0,#000 25%,transparent 68%);mask:radial-gradient(circle,#000 0,#000 25%,transparent 68%);mix-blend-mode:screen}
+.bubble{position:relative;width:170px;height:150px;background:var(--paper);border:5px solid var(--ink);border-radius:36px;display:flex;align-items:center;justify-content:center;
+ font-family:"RSerif";font-weight:700;font-size:104px;color:var(--red);box-shadow:8px 10px 0 rgba(0,0,0,.18)}
+.bubble::after{content:"";position:absolute;bottom:-34px;right:36px;border:18px solid transparent;border-top:22px solid var(--ink)}
+.pause{display:flex;gap:22px;padding:26px 30px;background:rgba(239,232,220,.92);border:5px solid var(--red);border-radius:24px;box-shadow:6px 8px 0 rgba(0,0,0,.15)}
+.pause i{display:block;width:30px;height:96px;background:var(--red);border-radius:6px}
+.ring{position:absolute;left:-150px;top:-150px;width:300px;height:300px;border:5px solid #efe8dc;border-radius:50%;opacity:0}
+.phone{width:200px;height:380px;border-radius:30px;background:#1f1b18;padding:12px;box-shadow:10px 14px 0 rgba(0,0,0,.2)}
+.phone .scr{width:100%;height:100%;border-radius:20px;background:var(--paper);position:relative;overflow:hidden}
+.phone .av{position:absolute;top:16px;right:14px;width:40px;height:40px;border-radius:50%;background:var(--red)}
+.phone .ln{position:absolute;right:62px;height:9px;border-radius:5px;background:#bdb3a2}
+.phone .img{position:absolute;top:70px;left:12px;right:12px;height:170px;border-radius:10px;background:linear-gradient(135deg,#d9b06a,var(--red))}
+.phone .ht{position:absolute;bottom:22px;right:16px;width:46px;height:46px}
+.note{background:var(--paper);padding:14px 34px 24px;box-shadow:8px 12px 0 rgba(0,0,0,.18);transform:rotate(-4deg);font-family:"RSerif";font-weight:700;font-size:64px;color:var(--ink);white-space:nowrap}
+.dust{position:absolute;width:8px;height:8px;border-radius:50%;background:rgba(255,240,210,.85);opacity:0;z-index:12;box-shadow:0 0 10px rgba(255,230,180,.8)}
+.rip{position:absolute;border:4px solid rgba(255,244,222,.85);border-radius:50%;opacity:0;z-index:12}
+.xst{width:150px;height:150px;border-radius:50%;border:8px solid var(--red);background:rgba(239,232,220,.85);display:flex;align-items:center;justify-content:center;transform:rotate(-8deg)}
+.foot{position:absolute;width:40px;height:68px;border-radius:50% 50% 42% 42%;background:var(--paper);opacity:0;z-index:12;box-shadow:0 4px 10px rgba(0,0,0,.4)}
+.foot::before{content:"";position:absolute;left:4px;right:4px;top:-20px;height:16px;border-radius:50%;background:var(--paper)}
+#flash{position:absolute;inset:0;background:#fbf6ec;opacity:0;z-index:13}
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="__TOTAL__" data-width="1080" data-height="1920">
+  <div id="paper" class="L"><div class="rule" style="top:160px"></div><div class="grain" id="g1"></div></div>
+  <div id="stage">
+    <div id="frame"></div>
+    <div id="cam"><div id="rig"><video id="v" class="clip" src="clip.mp4" data-start="0" data-duration="__VDUR__" data-has-audio="true" data-track-index="0"></video></div></div>
+    <div class="tape" id="tp1" style="left:206px;top:724px;transform:rotate(-24deg)"></div>
+    <div class="tape" id="tp2" style="left:726px;top:724px;transform:rotate(22deg)"></div>
+  </div>
+  <div id="bandEdge"></div>
+  <div id="rays"></div>
+  <canvas id="gl" width="540" height="960"></canvas>
+  <div id="sweep"></div>
+__MOMENTS__
+  <div id="flash"></div>
+__ACCENTS__
+  <div id="caps" class="ar" dir="rtl"></div>
+  <div id="grainTop" class="L"><div class="grain" id="g2"></div></div>
+__AUDIO__
+</div>
+<script>window.S3D_CFG = __S3D__;</script>
+<script src="scene3d.js"></script>
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+const TOTAL = __TOTAL__, CAPS = __CAPS__, STRIKE = __STRIKE__, KEYS = __KEYS__;
+
+/* ثري دي: كل فريم بيترسم من الزمن */
+const drv = { _t: -1, t(v) { if (v === undefined) return this._t; this._t = v; if (window.S3D) window.S3D.render(v); } };
+tl.fromTo(drv, { t: 0 }, { t: TOTAL, duration: TOTAL, ease: "none" }, 0);
+
+/* أوضاع الكاميرا: ملء الشاشة / صورة بمجلة / شريط */
+const FULL = { x: 0, y: 0, scale: 1, clipPath: "inset(0px 0px 0px 0px)" };
+const PAGE = { x: 216, y: 760, scale: 0.6, clipPath: "inset(0px 60px 770px 60px)" };
+const BAND = { x: 0, y: 560, scale: 1, clipPath: "inset(0px 0px 560px 0px)" };
+tl.set("#cam", { ...FULL, filter: "sepia(0) grayscale(0) brightness(1)" }, 0);
+tl.set("#stage", { rotation: 0 }, 0);
+const D = 0.6, E = "power3.inOut";
+function toPage(t) { tl.to("#cam", { ...PAGE, duration: D, ease: E }, t); tl.to("#stage", { rotation: -1.4, duration: D, ease: E }, t); tl.to("#frame", { opacity: 1, duration: 0.3 }, t + D * 0.55); tl.to(["#tp1", "#tp2"], { opacity: 1, duration: 0.25 }, t + D * 0.8); }
+function fromPage(t) { tl.to(["#tp1", "#tp2", "#frame"], { opacity: 0, duration: 0.18 }, t); tl.to("#cam", { ...FULL, duration: D, ease: E }, t + 0.05); tl.to("#stage", { rotation: 0, duration: D, ease: E }, t + 0.05); }
+function toBand(t) { tl.to("#cam", { ...BAND, duration: D, ease: E }, t); tl.to("#bandEdge", { opacity: 1, duration: 0.3 }, t + 0.3); }
+function fromBand(t) { tl.to("#bandEdge", { opacity: 0, duration: 0.15 }, t); tl.to("#cam", { ...FULL, duration: D, ease: E }, t); }
+function grp(id, a, b) { tl.set(id, { opacity: 1 }, a); tl.to(id, { opacity: 0, duration: 0.22, ease: "power1.in" }, b - 0.22); }
+function rise(sel, t, d = 0.5) { tl.fromTo(sel, { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: d, ease: "power2.out" }, t); }
+function wipe(sel, t, d = 0.5) { tl.fromTo(sel, { clipPath: "inset(-30% 0% -30% 100%)" }, { clipPath: "inset(-30% 0% -30% 0%)", duration: d, ease: "power2.inOut" }, t); }
+function pop(sel, t0, t1, rot = 0) {
+  tl.fromTo(sel, { scale: 0.3, opacity: 0, rotation: rot - 10 }, { scale: 1, opacity: 1, rotation: rot, duration: 0.42, ease: "back.out(2.2)", immediateRender: false }, t0);
+  tl.to(sel, { scale: 0.7, opacity: 0, duration: 0.25, ease: "power2.in" }, t1 - 0.25);
+}
+function chap(id, a, b) { tl.set(id, { opacity: 1 }, a); wipe(id, a, 0.45); tl.to(id, { opacity: 0, y: -16, duration: 0.3, ease: "power2.in" }, b - 0.3); }
+function ghost(txt, a, b) {
+  const d = document.createElement("div"); d.className = "ghost ar"; d.dir = "rtl"; d.textContent = txt;
+  document.getElementById("paper").insertBefore(d, document.getElementById("g1"));
+  tl.fromTo(d, { opacity: 0, scale: 1 }, { opacity: 0.05, scale: 1.02, duration: 0.5 }, a);
+  if (b - a > 1.1) tl.to(d, { scale: 1.08, duration: b - a - 0.8, ease: "none" }, a + 0.5);
+  tl.to(d, { opacity: 0, duration: 0.3 }, b - 0.3);
+}
+/* رسم خطوط SVG */
+document.querySelectorAll("path.dr").forEach(p => { const L = Math.ceil(p.getTotalLength()) + 2; p.style.strokeDasharray = L; p.style.strokeDashoffset = L; });
+function draw(svgSel, t0, t1, d = 0.5, stag = 0.08) {
+  tl.set(svgSel, { opacity: 1 }, t0);
+  document.querySelectorAll(svgSel + " path.dr").forEach((p, i) => tl.to(p, { strokeDashoffset: 0, duration: d, ease: "power2.out" }, t0 + i * stag));
+  tl.to(svgSel, { opacity: 0, duration: 0.3 }, t1 - 0.3);
+}
+tl.to("#g1", { x: 50, y: -40, duration: TOTAL, ease: "steps(" + Math.round(TOTAL * 12) + ")" }, 0);
+tl.to("#g2", { x: -46, y: 38, duration: TOTAL, ease: "steps(" + Math.round(TOTAL * 12) + ")" }, 0);
+
+/* الكاميرا الحرّة: قطع زوم (cut)، دفعة ناعمة (ease)، سحبة سريعة بغباش (whip)، تقريب بطيء (slow)، وانجراف خفيف بين المفاتيح */
+tl.set("#rig", { x: 0, y: 0, scale: 1, filter: "blur(0px)" }, 0);
+const xy = (s, fx, fy) => ({ x: fx * (1 - s), y: fy * (1 - s), scale: s });
+KEYS.forEach((k, i) => {
+  const [t, kind, s, fx, fy] = k;
+  const nt = i + 1 < KEYS.length ? KEYS[i + 1][0] : TOTAL;
+  let settle = t;
+  if (kind === "cut") { tl.set("#rig", xy(s, fx, fy), t); }
+  else if (kind === "ease") { tl.to("#rig", { ...xy(s, fx, fy), duration: 0.45, ease: "power3.inOut" }, t); settle = t + 0.45; }
+  else if (kind === "slow") { tl.to("#rig", { ...xy(s, fx, fy), duration: Math.max(0.3, nt - t), ease: "sine.inOut" }, t); return; }
+  else if (kind === "whip") {
+    tl.to("#rig", { filter: "blur(16px)", x: "-=70", duration: 0.1, ease: "power2.in" }, t - 0.1);
+    const p = xy(s, fx, fy);
+    tl.set("#rig", { x: p.x + 70, y: p.y, scale: p.scale }, t);
+    tl.to("#rig", { x: p.x, filter: "blur(0px)", duration: 0.18, ease: "power2.out" }, t);
+    settle = t + 0.18;
+  }
+  if (KEYS[i + 1] && KEYS[i + 1][1] === "slow") return;
+  const end = (KEYS[i + 1] && KEYS[i + 1][1] === "whip") ? nt - 0.1 : nt;
+  if (end - settle > 0.3) tl.to("#rig", { ...xy(s * 1.025, fx, fy), duration: end - settle, ease: "none" }, settle);
+});
+
+__JS__
+
+/* الكابشن: شريط ورق، الكلمة المنطوقة بالأحمر، الجاية باهتة */
+const capsEl = document.getElementById("caps");
+CAPS.forEach((c, i) => {
+  const d = document.createElement("div"); d.className = "cap";
+  d.style.transform = "translateX(-50%) rotate(" + (i % 2 ? 0.8 : -0.9) + "deg)";
+  c.w.forEach((w, j) => {
+    const s = document.createElement("span"); s.className = "cw"; s.textContent = w.t;
+    if (STRIKE.includes(w.t)) { const k = document.createElement("i"); k.className = "st"; s.appendChild(k); gsap.set(k, { scaleX: 0, rotation: -3, transformOrigin: "100% 50%" }); }
+    d.appendChild(s); if (j < c.w.length - 1) d.appendChild(document.createTextNode(" "));
+  });
+  capsEl.appendChild(d);
+  const t0 = Math.max(0, c.s - 0.06);
+  tl.set(d, { opacity: 1 }, t0);
+  tl.fromTo(d, { clipPath: "inset(-20% 0% -20% 100%)" }, { clipPath: "inset(-20% 0% -20% 0%)", duration: 0.16, ease: "power2.out", immediateRender: false }, t0);
+  const sp = d.querySelectorAll(".cw");
+  c.w.forEach((w, j) => {
+    const ws = Math.max(t0, w.s - 0.02);
+    tl.set(sp[j], { opacity: 1, color: "__RED__" }, ws);
+    const nxt = j < c.w.length - 1 ? c.w[j + 1].s - 0.02 : Math.min(c.e, w.s + 0.6);
+    if (nxt > ws) tl.set(sp[j], { color: "__INK__" }, nxt);
+    if (STRIKE.includes(w.t)) tl.to(sp[j].querySelector(".st"), { scaleX: 1, duration: 0.25, ease: "power2.out" }, w.s + 0.25);
+  });
+  tl.set(d, { opacity: 0 }, c.e);
+});
+window.__timelines["main"] = tl;
+tl.seek(0);
+</script>
+</body>
+</html>
